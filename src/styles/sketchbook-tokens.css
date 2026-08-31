@@ -1,0 +1,79 @@
+/*
+ * Sketchbook theme tokens
+ *
+ * Shared material values are inert until one of the scoped dashboard or quiz
+ * pilot styles consumes them. Other product surfaces remain unchanged.
+ */
+:root {
+  --paper-canvas: #f8f4e8;
+  --paper-surface: #fffdf5;
+  --paper-note: #fff2ad;
+  --pencil: #243129;
+  --sketch-green: #26865c;
+  --sketch-green-dark: #174c35;
+  --correction: #d85f58;
+  --correction-pale: #fde8e3;
+  --sketch-line: #345342;
+  --sketch-shadow-sm: 3px 3px 0 rgb(36 49 41 / 20%);
+  --sketch-shadow-md: 4px 4px 0 #243129;
+  --sketch-radius-sm: 9px 12px 10px 8px / 10px 8px 12px 9px;
+  --sketch-radius-md: 15px 19px 14px 18px / 18px 14px 20px 15px;
+  --sketch-tilt-left: -0.35deg;
+  --sketch-tilt-right: 0.35deg;
+  --font-hand: ui-rounded, "Kaiti SC", "STKaiti", "KaiTi", "PingFang SC", sans-serif;
+}
+
+.dashboard-page {
+  --sk-paper: var(--paper-surface);
+  --sk-paper-warm: #f8f2df;
+  --sk-paper-deep: #eee5cf;
+  --sk-pencil: var(--pencil);
+  --sk-pencil-muted: #657067;
+  --sk-pencil-faint: rgb(36 49 41 / 16%);
+  --sk-brand: var(--sketch-green);
+  --sk-brand-dark: var(--sketch-green-dark);
+  --sk-brand-pale: #e5f3ea;
+  --sk-success: #267a52;
+  --sk-success-pale: #e5f3ea;
+  --sk-postit: #f6df73;
+  --sk-postit-pale: var(--paper-note);
+  --sk-correction: var(--correction);
+  --sk-correction-dark: #9f3e3a;
+  --sk-correction-pale: var(--correction-pale);
+  --sk-focus: #397bc1;
+
+  --sk-space-1: 4px;
+  --sk-space-2: 8px;
+  --sk-space-3: 12px;
+  --sk-space-4: 16px;
+  --sk-space-5: 20px;
+  --sk-space-6: 24px;
+  --sk-space-8: 32px;
+
+  --sk-radius-sm: var(--sketch-radius-sm);
+  --sk-radius-md: var(--sketch-radius-md);
+  --sk-radius-lg: 22px 27px 20px 25px / 25px 21px 28px 22px;
+  --sk-radius-round: 48% 52% 46% 54% / 52% 44% 56% 48%;
+
+  --sk-line-thin: 1px solid rgb(36 49 41 / 24%);
+  --sk-line-strong: 2px solid var(--sk-pencil);
+  --sk-line-dashed: 1px dashed rgb(36 49 41 / 36%);
+  --sk-shadow-3: var(--sketch-shadow-sm);
+  --sk-shadow-4: var(--sketch-shadow-md);
+  --sk-shadow-red: 3px 3px 0 rgb(159 62 58 / 72%);
+  --sk-shadow-green: 3px 3px 0 var(--sk-brand-dark);
+
+  --sk-tilt-negative: var(--sketch-tilt-left);
+  --sk-tilt-positive: var(--sketch-tilt-right);
+  --sk-tilt-accent-negative: -0.8deg;
+  --sk-tilt-accent-positive: 0.8deg;
+
+  /* Rest -> preparation -> contact -> rebound/settle. */
+  --sk-motion-prepare: 65ms;
+  --sk-motion-contact: 75ms;
+  --sk-motion-settle: 150ms;
+  --sk-motion-total: 290ms;
+  --sk-ease-prepare: cubic-bezier(.38, 0, .72, .35);
+  --sk-ease-contact: cubic-bezier(.2, .82, .35, 1);
+  --sk-ease-settle: cubic-bezier(.2, .82, .3, 1.18);
+}
