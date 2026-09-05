@@ -110,6 +110,30 @@
   letter-spacing: .12em;
 }
 
+/* The sidebar is intentionally narrow. Stack the descriptor under the
+ * Chinese wordmark so the complete lockup stays inside its own column. */
+.sidebar > .brand.brand-v2 {
+  width: 100%;
+  gap: 8px;
+}
+
+.sidebar > .brand.brand-v2 .brand-mark {
+  width: 40px;
+}
+
+.sidebar > .brand.brand-v2 .brand-wordmark {
+  display: grid;
+  gap: 4px;
+  align-items: start;
+  flex: 1 1 auto;
+  line-height: 1;
+}
+
+.sidebar > .brand.brand-v2 .brand-wordmark small {
+  font-size: 8px;
+  letter-spacing: .1em;
+}
+
 .brand.brand-v2-compact {
   gap: 0;
 }
