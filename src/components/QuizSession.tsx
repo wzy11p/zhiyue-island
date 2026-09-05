@@ -1,4 +1,5 @@
 import {
+  ArrowLeft,
   ArrowRight,
   BookOpen,
   Check,
@@ -10,12 +11,19 @@ import {
   RotateCcw,
   Sparkles,
   Target,
-  X,
 } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { achievementDefinitions } from '../data/achievements'
 import { chapters, difficultyMeta } from '../data/chapters'
-import type { AnswerOutcome, Question, QuizSessionConfig, StudyState } from '../types'
+import { getJourneyNode } from '../data/journey'
+import { getPlainLanguageGuide } from '../data/plainLanguageQuestions'
+import type {
+  AnswerOutcome,
+  JourneySessionResult,
+  Question,
+  QuizSessionConfig,
+  StudyState,
+} from '../types'
 import { Brand } from './Brand'
 import { EmptyState } from './EmptyState'
 
@@ -24,6 +32,7 @@ interface QuizSessionProps {
   questions: Question[]
   state: StudyState
   onAnswer: (question: Question, selectedIndex: number, mode: 'learn' | 'review') => AnswerOutcome
+  onComplete?: (result: JourneySessionResult) => void
   onExit: () => void
   onRefillHearts: () => void
 }
@@ -44,6 +53,7 @@ export function QuizSession({
   questions,
   state,
   onAnswer,
+  onComplete,
   onExit,
   onRefillHearts,
 }: QuizSessionProps) {
@@ -71,13 +81,23 @@ export function QuizSession({
   const [hellCoachEnabled, setHellCoachEnabled] = useState(
     config.difficulty === 'hard' && config.hellCoachEnabled !== false,
   )
+  const [showPlainGuide, setShowPlainGuide] = useState(true)
   const questionTitleRef = useRef<HTMLHeadingElement>(null)
   const wrongTitleRef = useRef<HTMLHeadingElement>(null)
+  const completionReportedRef = useRef(false)
 
   const currentQuestion = sessionQuestions[currentIndex]
   const chapter = chapters.find((item) => item.id === currentQuestion?.chapterId)
+  const journeyNode = config.journeyNodeId ? getJourneyNode(config.journeyNodeId) : undefined
+  const plainGuide = currentQuestion ? getPlainLanguageGuide(currentQuestion) : undefined
+  const exitLabel = config.journeyNodeId ? '返回群岛' : '退出练习'
   const answeredCount = sessionStats.correct + sessionStats.wrong
   const accuracy = answeredCount ? Math.round((sessionStats.correct / answeredCount) * 100) : 0
+  const journeyPassed = journeyNode
+    ? accuracy >= journeyNode.completion.minimumAccuracy * 100
+      && (journeyNode.completion.maximumWrong === undefined || sessionStats.wrong <= journeyNode.completion.maximumWrong)
+      && (journeyNode.completion.requiredQuestionCount === undefined || answeredCount >= journeyNode.completion.requiredQuestionCount)
+    : undefined
   const isWrong = Boolean(outcome && !outcome.correct)
   const isHellSession = config.mode === 'learn' && config.difficulty === 'hard'
   const selectedMisconception = currentQuestion && selectedIndex !== null
@@ -104,6 +124,7 @@ export function QuizSession({
     setCurrentIndex((value) => value + 1)
     setSelectedIndex(null)
     setOutcome(null)
+    setShowPlainGuide(true)
   }
 
   useEffect(() => {
@@ -117,6 +138,21 @@ export function QuizSession({
   useEffect(() => {
     if (selectedIndex === null) questionTitleRef.current?.focus()
   }, [currentIndex, selectedIndex])
+
+  useEffect(() => {
+    if (!finished || !config.journeyNodeId || !onComplete || completionReportedRef.current) return
+    completionReportedRef.current = true
+    const answered = sessionStats.correct + sessionStats.wrong
+    onComplete({
+      nodeId: config.journeyNodeId,
+      questionIds: sessionQuestions.map((question) => question.id),
+      correct: sessionStats.correct,
+      wrong: sessionStats.wrong,
+      answered,
+      accuracy: answered ? sessionStats.correct / answered : 0,
+      completedAt: new Date().toISOString(),
+    })
+  }, [config.journeyNodeId, finished, onComplete, sessionQuestions, sessionStats])
 
   useEffect(() => {
     if (!isWrong) return
@@ -142,6 +178,11 @@ export function QuizSession({
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault()
+        onExit()
+        return
+      }
       if (finished) return
       const target = event.target
       const isFormControl = target instanceof HTMLButtonElement || target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement
@@ -162,7 +203,7 @@ export function QuizSession({
   if (!sessionQuestions.length) {
     return (
       <div className="quiz-shell quiz-empty-shell">
-        <div className="quiz-topbar"><Brand /><button className="icon-button" type="button" onClick={onExit} aria-label="退出答题"><X /></button></div>
+        <div className="quiz-topbar"><Brand /><button className="quiz-back" type="button" onClick={onExit}><ArrowLeft size={18} /> {exitLabel}</button></div>
         <EmptyState
           Icon={BookOpen}
           title={config.mode === 'review' ? '暂时没有可复习的错题' : `这一章还没有${difficultyMeta[config.difficulty ?? 'easy'].label}题`}
@@ -183,8 +224,21 @@ export function QuizSession({
             <div><Sparkles size={42} /></div>
           </div>
           <span className="eyebrow">SESSION COMPLETE</span>
-          <h1>{outcome?.heartsLeft === 0 && config.mode === 'learn' ? '先停一下，巩固再出发' : '这一轮完成了！'}</h1>
-          <p>{config.mode === 'review' ? '每一次重新作答，都在把薄弱点变成长期记忆。' : '保持小步前进，你的知识网络正在变得更牢固。'}</p>
+          <h1>{journeyNode
+            ? journeyPassed ? '航标点亮，通关！' : '还没过关，再校准一次'
+            : outcome?.heartsLeft === 0 && config.mode === 'learn' ? '先停一下，巩固再出发' : '这一轮完成了！'}</h1>
+          <p>{journeyNode
+            ? journeyPassed
+              ? `你已经通过「${journeyNode.title}」，下一段航线将在地图上解锁。`
+              : `这关考的是：${journeyNode.description} 回到岛上后可以重新挑战。`
+            : config.mode === 'review' ? '每一次重新作答，都在把薄弱点变成长期记忆。' : '保持小步前进，你的知识网络正在变得更牢固。'}</p>
+
+          {journeyNode && (
+            <p className={journeyPassed ? 'completion-gate is-passed' : 'completion-gate'}>
+              通关条件：正确率至少 {Math.round(journeyNode.completion.minimumAccuracy * 100)}%
+              {journeyNode.completion.maximumWrong === undefined ? '' : `，最多错 ${journeyNode.completion.maximumWrong} 题`}
+            </p>
+          )}
 
           <div className="completion-stats">
             <div><span className="stat-orb yellow"><Target size={20} /></span><strong>{accuracy}%</strong><small>正确率</small></div>
@@ -206,7 +260,7 @@ export function QuizSession({
               </button>
             )}
             <button className="primary-button" type="button" onClick={onExit}>
-              回到学习页 <ArrowRight size={18} />
+              {config.journeyNodeId ? '回到航海地图' : '回到学习页'} <ArrowRight size={18} />
             </button>
           </div>
         </div>
@@ -222,11 +276,12 @@ export function QuizSession({
     <div className="quiz-shell">
       <header className="quiz-topbar">
         <Brand compact />
-        <button className="quiz-close" type="button" onClick={onExit} aria-label="退出本轮练习">
-          <X size={21} />
+        <button className="quiz-back" type="button" onClick={onExit} title={`${exitLabel}（Esc）`}>
+          <ArrowLeft size={18} />
+          <span>{exitLabel}</span>
         </button>
         <div className="quiz-progress" aria-label={`答题进度 ${currentIndex + 1} / ${sessionQuestions.length}`}>
-          <span style={{ width: `${progress}%` }} />
+          <span style={{ transform: `scaleX(${progress / 100})` }} />
         </div>
         <span className="quiz-count"><b>{currentIndex + 1}</b> / {sessionQuestions.length}</span>
         <span className="quiz-heart"><Heart size={18} fill="currentColor" /> {config.mode === 'review' ? '复习' : state.hearts}</span>
@@ -258,10 +313,27 @@ export function QuizSession({
 
               {config.mode === 'learn' && (
                 <p className={sessionQuestions.length < 10 ? 'practice-scope-note is-short' : 'practice-scope-note'}>
-                  {sessionQuestions.length < 10
+                  {journeyNode
+                    ? `本关 ${sessionQuestions.length} 题 · 通关需达到 ${Math.round(journeyNode.completion.minimumAccuracy * 100)}%${journeyNode.completion.maximumWrong === undefined ? '' : ` · 最多错 ${journeyNode.completion.maximumWrong} 题`}`
+                    : sessionQuestions.length < 10
                     ? `本章本档目前只有 ${sessionQuestions.length} 道题，本轮按实际题量练习，不会混入其他难度。`
                     : `本轮固定练习 10 道${difficultyMeta[config.difficulty ?? 'easy'].label}题，不跨难度混合。`}
                 </p>
+              )}
+
+              {plainGuide && (
+                <aside className={`plain-language-guide${showPlainGuide ? ' is-open' : ''}`}>
+                  <button
+                    type="button"
+                    aria-expanded={showPlainGuide}
+                    onClick={() => setShowPlainGuide((value) => !value)}
+                  >
+                    <Lightbulb size={17} aria-hidden="true" />
+                    <span>{showPlainGuide ? '这道题先用一句话讲清楚' : '没听懂？先看一句大白话'}</span>
+                    <ChevronRight size={17} aria-hidden="true" />
+                  </button>
+                  {showPlainGuide && <p>{plainGuide}</p>}
+                </aside>
               )}
 
               <h1 ref={questionTitleRef} tabIndex={-1}>{currentQuestion.prompt}</h1>

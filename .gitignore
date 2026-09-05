@@ -11,6 +11,23 @@ vite.config.d.ts
 .env
 .env.*
 !.env.example
+!.env.server.example
+
+# Local credentials and deployment secrets
+.npmrc
+.netrc
+.envrc
+.dev.vars
+secrets.json
+credentials.json
+service-account.json
+*.tfvars
+*.pem
+*.key
+*.p12
+*.pfx
+id_rsa
+id_ed25519
 
 .DS_Store
 .idea/

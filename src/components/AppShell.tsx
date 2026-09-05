@@ -30,9 +30,9 @@ const navItems: Array<{
   mobileLabel: string
   Icon: typeof Home
 }> = [
-  { id: 'home', label: '今日学习', mobileLabel: '学习', Icon: Home },
+  { id: 'home', label: '群岛闯关', mobileLabel: '闯关', Icon: Home },
   { id: 'coach', label: 'AI 私教', mobileLabel: '私教', Icon: Bot },
-  { id: 'path', label: '闯关地图', mobileLabel: '闯关', Icon: Map },
+  { id: 'path', label: '章节练习', mobileLabel: '章节', Icon: Map },
   { id: 'knowledge', label: '知识脉络', mobileLabel: '脉络', Icon: BookOpenText },
   { id: 'flashcards', label: '记忆卡', mobileLabel: '卡片', Icon: GalleryVerticalEnd },
   { id: 'mistakes', label: '错题本', mobileLabel: '错题', Icon: BookOpenCheck },
@@ -65,7 +65,7 @@ function Navigation({
 
 export function AppShell({ activeView, state, onNavigate, onRefillHearts, children }: AppShellProps) {
   return (
-    <div className="app-shell">
+    <div className={activeView === 'home' ? 'app-shell is-journey-home' : 'app-shell'}>
       <a className="skip-link" href="#main-content">
         跳到主要内容
       </a>

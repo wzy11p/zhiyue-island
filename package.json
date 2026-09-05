@@ -1,7 +1,7 @@
 {
-  "name": "ai-pm-quiz",
+  "name": "zhiyue-island",
   "private": true,
-  "version": "0.1.0",
+  "version": "2.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite --host 0.0.0.0",
@@ -9,6 +9,7 @@
     "typecheck": "tsc -p tsconfig.app.json --noEmit",
     "audit:curriculum": "node scripts/analyze-curriculum.mjs",
     "validate:tutor": "node scripts/validate-tutor-engine.mjs",
+    "validate:journey": "node scripts/validate-journey.mjs",
     "validate:questions": "node scripts/validate-question-bank.mjs",
     "preview": "vite preview --host 0.0.0.0"
   },

@@ -1,4 +1,5 @@
 import type { Question } from '../types'
+import { applyPlainLanguageOverride } from './plainLanguageQuestions'
 import { questions as coreQuestions } from './questions'
 import { supplementalQuestions } from './supplementalQuestions'
 
@@ -9,7 +10,7 @@ import { supplementalQuestions } from './supplementalQuestions'
 export const questionCandidates: Question[] = [
   ...coreQuestions,
   ...supplementalQuestions,
-]
+].map(applyPlainLanguageOverride)
 
 export const questions: Question[] = questionCandidates.filter(
   (question) => question.status === 'published',

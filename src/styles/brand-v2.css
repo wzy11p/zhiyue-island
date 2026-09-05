@@ -1,0 +1,161 @@
+/*
+ * 知越岛 brand system
+ *
+ * The mark keeps a light halo plus dark keyline so it stays legible on both
+ * paper-light and dark product surfaces.
+ */
+.brand.brand-v2 {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  color: var(--ink, #1c2922);
+  line-height: 1;
+  isolation: isolate;
+}
+
+.brand.brand-v2 .brand-mark {
+  display: grid;
+  width: 42px;
+  height: 38px;
+  flex: 0 0 auto;
+  overflow: visible;
+  color: inherit;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  place-items: center;
+}
+
+.brand.brand-v2 .brand-symbol {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.brand-symbol-halo {
+  fill: none;
+  stroke: #fff9e9;
+  stroke-linejoin: round;
+  stroke-width: 6.5px;
+}
+
+.brand-symbol-page {
+  fill: #fff9e9;
+  stroke: #173f30;
+  stroke-linejoin: round;
+  stroke-width: 2.4px;
+}
+
+.brand-symbol-island-left {
+  fill: #1c513c;
+}
+
+.brand-symbol-slope {
+  fill: #42a274;
+  stroke: #173f30;
+  stroke-linejoin: round;
+  stroke-width: 1.8px;
+}
+
+.brand-symbol-river {
+  stroke: #fffdf5;
+  stroke-linecap: round;
+  stroke-width: 4.8px;
+}
+
+.brand-symbol-spine {
+  stroke: #173f30;
+  stroke-linecap: round;
+  stroke-width: 2.3px;
+}
+
+.brand-symbol-spark {
+  fill: #f2c94c;
+  stroke: #173f30;
+  stroke-linejoin: round;
+  stroke-width: 1.6px;
+}
+
+.brand-symbol-dot {
+  fill: #f2c94c;
+  stroke: #173f30;
+  stroke-width: 1.1px;
+}
+
+.brand.brand-v2 .brand-wordmark {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+  color: inherit;
+  letter-spacing: normal;
+  white-space: nowrap;
+}
+
+.brand.brand-v2 .brand-name {
+  color: var(--ink, #1c2922);
+  font-family: var(--font-hand, ui-rounded, "Kaiti SC", "STKaiti", "KaiTi", "PingFang SC", sans-serif);
+  font-size: 22px;
+  font-weight: 900;
+  letter-spacing: .02em;
+}
+
+.brand.brand-v2 .brand-wordmark small {
+  color: #66756c;
+  font-size: 8.5px;
+  font-weight: 850;
+  letter-spacing: .12em;
+}
+
+.brand.brand-v2-compact {
+  gap: 0;
+}
+
+.brand.brand-v2-compact .brand-mark {
+  width: 38px;
+  height: 34px;
+}
+
+@media (max-width: 520px) {
+  .brand.brand-v2 {
+    gap: 7px;
+  }
+
+  .brand.brand-v2 .brand-mark {
+    width: 37px;
+    height: 34px;
+  }
+
+  .brand.brand-v2 .brand-name {
+    font-size: 19px;
+  }
+
+  .brand.brand-v2 .brand-wordmark small {
+    display: none;
+  }
+}
+
+@media (forced-colors: active) {
+  .brand-symbol-halo,
+  .brand-symbol-page,
+  .brand-symbol-island-left,
+  .brand-symbol-slope,
+  .brand-symbol-spark,
+  .brand-symbol-dot {
+    fill: Canvas;
+    stroke: CanvasText;
+  }
+
+  .brand-symbol-river,
+  .brand-symbol-spine {
+    stroke: CanvasText;
+  }
+
+  .brand.brand-v2 .brand-name,
+  .brand.brand-v2 .brand-wordmark small {
+    color: CanvasText;
+  }
+}

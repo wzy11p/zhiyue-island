@@ -15,6 +15,13 @@ export type MasteryStatus = 'unseen' | 'acquiring' | 'guided' | 'independent' | 
 
 export type ConceptKind = 'concept' | 'rule' | 'skill' | 'boundary'
 
+export type QuestionFormat =
+  | 'single-choice'
+  | 'free-response'
+  | 'ordering'
+  | 'find-error'
+  | 'worked-example'
+
 export interface ConceptMisconception {
   id: string
   label: string
@@ -56,7 +63,7 @@ export interface Question {
   criticalNote?: string
   conceptId?: string
   stage?: LearningStage
-  format?: 'single-choice' | 'free-response' | 'ordering' | 'find-error' | 'worked-example'
+  format?: QuestionFormat
   objectiveId?: string
   misconceptionMap?: Record<number, string>
   sourceRefs?: KnowledgeSource[]
@@ -210,6 +217,145 @@ export interface WrongAnswerRecord {
   status: 'active' | 'mastered'
 }
 
+export type JourneyIslandIcon = 'compass' | 'network' | 'bridge' | 'agent' | 'quill' | 'lighthouse'
+
+export type JourneyNodeKind =
+  | 'recall'
+  | 'distinguish'
+  | 'application'
+  | 'boss'
+  | 'shortcut'
+  | 'lighthouse'
+
+export type JourneyNodeStatus =
+  | 'locked'
+  | 'available'
+  | 'in-progress'
+  | 'completed'
+  | 'cooldown'
+  | 'unavailable'
+
+export type JourneyIslandStatus = 'locked' | 'available' | 'in-progress' | 'completed'
+
+export interface JourneyPosition {
+  /** Percentage of the full journey canvas, from 0 to 100. */
+  x: number
+  /** Percentage of the full journey canvas, from 0 to 100. */
+  y: number
+}
+
+export interface JourneyQuestionQuery {
+  chapterId: string
+  difficulties: Difficulty[]
+  stages?: LearningStage[]
+  formats?: QuestionFormat[]
+  limit: number
+}
+
+export interface JourneyUnlockRule {
+  /** Every referenced node must be complete. */
+  allOf?: string[]
+  /** At least one referenced node must be complete. */
+  anyOf?: string[]
+}
+
+export interface JourneyCompletionRule {
+  /** Normalized 0..1 accuracy threshold. */
+  minimumAccuracy: number
+  maximumWrong?: number
+  requiredQuestionCount?: number
+}
+
+export interface JourneyNodeDefinition {
+  id: string
+  islandId: string
+  chapterId?: string
+  title: string
+  description: string
+  kind: JourneyNodeKind
+  order: number
+  unlock: JourneyUnlockRule
+  questionQuery?: JourneyQuestionQuery
+  completion: JourneyCompletionRule
+  rewardXp: number
+  position: JourneyPosition
+  /** Shortcut nodes replace this boss as an alternative island gate. */
+  replacesNodeId?: string
+  /** A shortcut can be attempted at most this many times per local day. */
+  dailyAttemptLimit?: number
+}
+
+export interface JourneyIslandDefinition {
+  id: string
+  chapterId?: string
+  title: string
+  shortTitle: string
+  description: string
+  accent: string
+  icon: JourneyIslandIcon
+  order: number
+  position: JourneyPosition
+  /** Main progression nodes only; a shortcut is tracked separately. */
+  nodeIds: string[]
+  shortcutNodeId?: string
+}
+
+export interface JourneyNodeProgress {
+  nodeId: string
+  attempts: number
+  bestAccuracy: number
+  bestCorrect: number
+  bestAnswered: number
+  stars: 0 | 1 | 2 | 3
+  completedAt?: string
+  lastPlayedAt?: string
+}
+
+export interface JourneySessionResult {
+  nodeId: string
+  questionIds: string[]
+  correct: number
+  wrong: number
+  answered: number
+  /** Normalized 0..1; helpers also tolerate a legacy 0..100 value. */
+  accuracy: number
+  completedAt: string
+}
+
+export interface JourneyApplyResult {
+  state: StudyState
+  passed: boolean
+  stars: 0 | 1 | 2 | 3
+  firstCompletion: boolean
+}
+
+export interface JourneyNodeSnapshot extends JourneyNodeDefinition {
+  status: JourneyNodeStatus
+  questionIds: string[]
+  progress?: JourneyNodeProgress
+  completed: boolean
+  hasFragileMastery: boolean
+  lockReason?: string
+}
+
+export interface JourneyIslandSnapshot extends JourneyIslandDefinition {
+  status: JourneyIslandStatus
+  nodes: JourneyNodeSnapshot[]
+  shortcut?: JourneyNodeSnapshot
+  completedNodes: number
+  totalNodes: number
+  progressPercent: number
+}
+
+export interface JourneySnapshot {
+  islands: JourneyIslandSnapshot[]
+  nodes: JourneyNodeSnapshot[]
+  recommendedNode?: JourneyNodeSnapshot
+  totalStars: number
+  completedNodes: number
+  totalNodes: number
+}
+
 export interface Achievement {
   id: string
   unlockedAt: string
@@ -231,7 +377,7 @@ export interface KnowledgeImportRecord {
 }
 
 export interface StudyState {
-  version: 3
+  version: 4
   xp: number
   hearts: number
   maxHearts: number
@@ -249,6 +395,7 @@ export interface StudyState {
   customFlashcards: CustomFlashcard[]
   flashcardReviews: Record<string, FlashcardReviewRecord>
   conceptMastery: Record<string, ConceptMasteryRecord>
+  journeyProgress: Record<string, JourneyNodeProgress>
 }
 
 export interface AnswerOutcome {
@@ -266,6 +413,7 @@ export interface QuizSessionConfig {
   difficulty?: Difficulty
   hellCoachEnabled?: boolean
   questionIds?: string[]
+  journeyNodeId?: string
 }
 
 export interface KnowledgeIngestionRequest {

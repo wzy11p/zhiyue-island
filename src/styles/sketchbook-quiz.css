@@ -15,7 +15,15 @@
 
 .quiz-shell .quiz-topbar {
   position: relative;
+  grid-template-areas: "brand back progress count heart";
+  grid-template-columns: auto auto minmax(150px, 1fr) auto auto;
 }
+
+.quiz-shell .quiz-topbar .brand-mark { grid-area: brand; }
+.quiz-shell .quiz-back { grid-area: back; }
+.quiz-shell .quiz-progress { grid-area: progress; }
+.quiz-shell .quiz-count { grid-area: count; }
+.quiz-shell .quiz-heart { grid-area: heart; }
 
 .quiz-shell .quiz-topbar::after {
   position: absolute;
@@ -35,24 +43,47 @@
   box-shadow: 2px 2px 0 var(--paper-note, #f3df77);
 }
 
-.quiz-shell .quiz-close {
-  min-width: 44px;
+.quiz-shell .quiz-back {
+  display: inline-flex;
+  min-width: 100px;
   min-height: 44px;
+  padding: 0 12px;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  color: var(--sketch-green-dark, #174c35);
+  background: var(--paper-surface, #fffdf6);
   border: 1.5px solid transparent;
   border-radius: var(--sketch-radius-sm, 11px 14px 10px 13px);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
   transition: color 140ms ease, background 140ms ease, border-color 140ms ease, transform 140ms ease, box-shadow 140ms ease;
 }
 
-.quiz-shell .quiz-close:hover {
-  background: var(--paper-surface, #fffdf6);
+.quiz-shell .quiz-back:hover {
+  color: var(--pencil, #1c2922);
+  background: #f4f0df;
   border-color: rgb(28 41 34 / 42%);
   box-shadow: 2px 2px 0 rgb(28 41 34 / 18%);
   transform: translate(-1px, -1px);
 }
 
-.quiz-shell .quiz-close:active {
+.quiz-shell .quiz-back:active {
   box-shadow: none;
   transform: translate(1px, 1px);
+}
+
+.quiz-shell .quiz-back:focus-visible {
+  outline: 3px solid var(--sketch-green, #26865c);
+  outline-offset: 3px;
+}
+
+.quiz-empty-shell .quiz-topbar {
+  justify-content: space-between;
+  grid-template-areas: "brand back";
+  grid-template-columns: auto auto;
 }
 
 .quiz-shell .quiz-progress {
@@ -66,10 +97,12 @@
 }
 
 .quiz-shell .quiz-progress span {
+  width: 100%;
   min-width: 7px;
   background: var(--sketch-green, #26865c);
   border-radius: 4px 6px 4px 5px;
-  transition: width 300ms cubic-bezier(.2, .76, .25, 1);
+  transform-origin: left center;
+  transition: transform 300ms cubic-bezier(.2, .76, .25, 1);
 }
 
 .quiz-shell .quiz-count,
@@ -149,6 +182,55 @@
   color: #69541e;
   background: color-mix(in srgb, var(--paper-note, #f3df77) 31%, var(--paper-surface, #fffdf6));
   border-color: rgb(135 106 30 / 38%);
+}
+
+.quiz-shell .plain-language-guide {
+  margin: 0 0 18px;
+  padding: 0;
+  color: #315945;
+  background: #f1f7e8;
+  border: 1px solid #b8cba5;
+  border-radius: 12px 15px 11px 14px;
+}
+
+.quiz-shell .plain-language-guide > button {
+  display: grid;
+  width: 100%;
+  min-height: 44px;
+  padding: 9px 12px;
+  align-items: center;
+  grid-template-columns: auto 1fr auto;
+  gap: 8px;
+  color: #315945;
+  background: transparent;
+  border: 0;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  text-align: left;
+  cursor: pointer;
+}
+
+.quiz-shell .plain-language-guide > button svg:last-child {
+  transition: transform 180ms cubic-bezier(.2, .76, .25, 1);
+}
+
+.quiz-shell .plain-language-guide.is-open > button svg:last-child {
+  transform: rotate(90deg);
+}
+
+.quiz-shell .plain-language-guide > button:focus-visible {
+  outline: 3px solid var(--sketch-green, #26865c);
+  outline-offset: 3px;
+}
+
+.quiz-shell .plain-language-guide > p {
+  max-width: 72ch;
+  margin: 0;
+  padding: 0 13px 12px 37px;
+  color: #405f4e;
+  font-size: 14px;
+  line-height: 1.65;
 }
 
 .quiz-shell .quiz-main h1 {
@@ -437,6 +519,22 @@
 }
 
 @media (max-width: 600px) {
+  .quiz-shell .quiz-topbar {
+    min-height: 96px;
+    padding: 8px 13px 10px;
+    grid-template-areas:
+      "back brand count heart"
+      "progress progress progress progress";
+    grid-template-columns: auto minmax(0, 1fr) auto auto;
+    gap: 8px 10px;
+  }
+
+  .quiz-shell .quiz-back {
+    min-width: 0;
+    min-height: 40px;
+    padding-inline: 9px;
+  }
+
   .quiz-shell .quiz-topbar::after {
     right: 13px;
     left: 13px;
@@ -498,7 +596,7 @@
 
 @media (hover: none) {
   .quiz-shell .option-button:hover:not(:disabled),
-  .quiz-shell .quiz-close:hover,
+  .quiz-shell .quiz-back:hover,
   .quiz-shell .feedback-next:hover {
     transform: none;
   }

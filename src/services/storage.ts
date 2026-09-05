@@ -1,4 +1,10 @@
-import type { ConceptMasteryRecord, CustomFlashcard, FlashcardReviewRecord, StudyState } from '../types'
+import type {
+  ConceptMasteryRecord,
+  CustomFlashcard,
+  FlashcardReviewRecord,
+  JourneyNodeProgress,
+  StudyState,
+} from '../types'
 
 const STORAGE_KEY = 'zhiyue-ai-pm-study-state-v1'
 
@@ -6,19 +12,20 @@ const migrateStoredState = (value: unknown): Partial<StudyState> => {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return {}
   const stored = value as Partial<StudyState> & { version?: number }
 
-  if (stored.version === 3) return stored
+  if (stored.version === 4) return stored
 
-  // v1/v2 did not track concept-level mastery. Keep every compatible field
-  // and add the new collection explicitly instead of relying on a shallow
-  // spread to make an old payload look current.
+  // Older payloads did not track journey progress, and v1/v2 also lacked
+  // concept mastery. Keep every compatible field while explicitly adding the
+  // collections introduced by later schema versions.
   return {
     ...stored,
-    conceptMastery: {},
+    conceptMastery: stored.conceptMastery ?? {},
+    journeyProgress: {},
   }
 }
 
 export const createInitialState = (): StudyState => ({
-  version: 3,
+  version: 4,
   xp: 0,
   hearts: 5,
   maxHearts: 5,
@@ -35,6 +42,7 @@ export const createInitialState = (): StudyState => ({
   customFlashcards: [],
   flashcardReviews: {},
   conceptMastery: {},
+  journeyProgress: {},
 })
 
 const isCustomFlashcard = (value: unknown): value is CustomFlashcard => {
@@ -84,6 +92,26 @@ const sanitizeConceptMastery = (value: unknown): Record<string, ConceptMasteryRe
   )
 }
 
+const sanitizeJourneyProgress = (value: unknown): Record<string, JourneyNodeProgress> => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return {}
+
+  return Object.fromEntries(
+    Object.entries(value).filter((entry): entry is [string, JourneyNodeProgress] => {
+      const [key, record] = entry
+      if (!record || typeof record !== 'object') return false
+      const candidate = record as Partial<JourneyNodeProgress>
+      return candidate.nodeId === key
+        && typeof candidate.attempts === 'number'
+        && typeof candidate.bestAccuracy === 'number'
+        && typeof candidate.bestCorrect === 'number'
+        && typeof candidate.bestAnswered === 'number'
+        && typeof candidate.stars === 'number'
+        && (!candidate.completedAt || typeof candidate.completedAt === 'string')
+        && (!candidate.lastPlayedAt || typeof candidate.lastPlayedAt === 'string')
+    }),
+  )
+}
+
 export function loadStudyState(): StudyState {
   if (typeof window === 'undefined') return createInitialState()
 
@@ -96,7 +124,7 @@ export function loadStudyState(): StudyState {
     return {
       ...fallback,
       ...parsed,
-      version: 3,
+      version: 4,
       completedQuestionIds: Array.isArray(parsed.completedQuestionIds)
         ? parsed.completedQuestionIds
         : [],
@@ -109,6 +137,7 @@ export function loadStudyState(): StudyState {
         : [],
       flashcardReviews: sanitizeReviewRecords(parsed.flashcardReviews),
       conceptMastery: sanitizeConceptMastery(parsed.conceptMastery),
+      journeyProgress: sanitizeJourneyProgress(parsed.journeyProgress),
     }
   } catch {
     return createInitialState()

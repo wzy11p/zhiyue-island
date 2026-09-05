@@ -2,12 +2,14 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { achievementDefinitions } from '../data/achievements'
 import { difficultyMeta } from '../data/chapters'
 import { addDays, isYesterday, toLocalDateKey } from '../services/dates'
+import { applyJourneyResult } from '../services/journey'
 import { clearStudyState, createInitialState, loadStudyState, saveStudyState } from '../services/storage'
 import type {
   AnswerOutcome,
   ConceptMasteryRecord,
   FlashcardDraft,
   FlashcardReviewRecord,
+  JourneySessionResult,
   KnowledgeImportRecord,
   Question,
   StudyState,
@@ -344,6 +346,20 @@ export function useStudyState() {
     })
   }, [])
 
+  const recordJourneyResult = useCallback((result: JourneySessionResult) => {
+    const preview = applyJourneyResult(stateRef.current, result)
+    setState((current) => {
+      const applied = applyJourneyResult(current, result)
+      stateRef.current = applied.state
+      return applied.state
+    })
+    return {
+      passed: preview.passed,
+      stars: preview.stars,
+      firstCompletion: preview.firstCompletion,
+    }
+  }, [])
+
   const resetProgress = useCallback(() => {
     clearStudyState()
     setState((current) => {
@@ -366,6 +382,7 @@ export function useStudyState() {
     deleteCustomFlashcard,
     reviewFlashcard,
     recordTutorAttempt,
+    recordJourneyResult,
     resetProgress,
   }
 }

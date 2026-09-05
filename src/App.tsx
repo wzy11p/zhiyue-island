@@ -9,9 +9,16 @@ import { KnowledgeBase } from './components/KnowledgeBase'
 import { MistakeNotebook } from './components/MistakeNotebook'
 import { ProgressReport } from './components/ProgressReport'
 import { QuizSession } from './components/QuizSession'
+import { getJourneyNode } from './data/journey'
 import { questions } from './data/questionBank'
 import { useStudyState } from './hooks/useStudyState'
-import type { Difficulty, NavigationView, QuizSessionConfig } from './types'
+import { getJourneySnapshot, resolveJourneyQuestionIds } from './services/journey'
+import type {
+  Difficulty,
+  JourneySessionResult,
+  NavigationView,
+  QuizSessionConfig,
+} from './types'
 
 const TutorSession = lazy(() => import('./components/TutorSession').then((module) => ({ default: module.TutorSession })))
 
@@ -26,6 +33,7 @@ function App() {
     deleteCustomFlashcard,
     reviewFlashcard,
     recordTutorAttempt,
+    recordJourneyResult,
     resetProgress,
   } = useStudyState()
   const [activeView, setActiveView] = useState<NavigationView>('home')
@@ -68,6 +76,57 @@ function App() {
     setSession({ key, mode: 'review', questionIds: ids })
   }
 
+  const startJourneyNode = (nodeId: string) => {
+    const node = getJourneyNode(nodeId)
+    const snapshot = getJourneySnapshot(state, questions)
+    const nodeSnapshot = snapshot.nodes.find((item) => item.id === nodeId)
+    if (!node || !nodeSnapshot) {
+      setNotice('这条航线暂时不存在，请重新选择一座岛。')
+      return
+    }
+    if (node.kind === 'lighthouse') {
+      setNotice('主航线已经点亮。接下来可以复习薄弱点，或等待新的知识岛加入。')
+      return
+    }
+    if (['locked', 'cooldown', 'unavailable'].includes(nodeSnapshot.status)) {
+      setNotice(nodeSnapshot.lockReason ?? '这道关卡暂时还不能挑战。')
+      return
+    }
+    if (state.hearts <= 0) {
+      setNotice('爱心用完了。恢复爱心后再继续航行。')
+      return
+    }
+
+    const questionIds = resolveJourneyQuestionIds(node, questions, state.completedQuestionIds)
+    if (!questionIds.length) {
+      setNotice('这一关的题池还没有准备好。你可以先去 AI 私教学习概念。')
+      return
+    }
+
+    const key = sessionKey + 1
+    const difficulty = node.questionQuery?.difficulties.at(-1) ?? 'easy'
+    setSessionKey(key)
+    setReturnView('home')
+    setNotice(null)
+    setSession({
+      key,
+      mode: 'learn',
+      chapterId: node.chapterId,
+      difficulty,
+      hellCoachEnabled: ['boss', 'shortcut'].includes(node.kind),
+      questionIds,
+      journeyNodeId: node.id,
+    })
+  }
+
+  const completeJourneyNode = (result: JourneySessionResult) => {
+    const outcome = recordJourneyResult(result)
+    const node = getJourneyNode(result.nodeId)
+    setNotice(outcome.passed
+      ? `${node?.title ?? '关卡'}已通关，获得 ${outcome.stars} 星${outcome.firstCompletion ? '和首次通关奖励' : ''}。`
+      : `${node?.title ?? '关卡'}还差一点：本轮 ${Math.round(result.accuracy * 100)}%，回到岛上即可再次挑战。`)
+  }
+
   if (session) {
     return (
       <QuizSession
@@ -76,6 +135,7 @@ function App() {
         questions={questions}
         state={state}
         onAnswer={answerQuestion}
+        onComplete={completeJourneyNode}
         onRefillHearts={refillHearts}
         onExit={() => {
           setSession(null)
@@ -99,12 +159,9 @@ function App() {
         <Dashboard
           state={state}
           questions={questions}
-          onStart={startLearn}
+          onStartNode={startJourneyNode}
           onReview={() => startReview()}
-          onNavigatePath={() => navigate('path')}
           onNavigateCoach={() => navigate('coach')}
-          onNavigateImport={() => navigate('import')}
-          onRefillHearts={refillHearts}
         />
       )}
       {activeView === 'coach' && (
